@@ -1,5 +1,5 @@
 # ascivid
-Simple video to ASCII renderer. Uses FFplay for audio.
+Simple video to ASCII renderer using OpenCV and FFplay for audio.
 
 ## Dependencies
 - Python 3.8+
