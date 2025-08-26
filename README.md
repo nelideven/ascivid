@@ -12,6 +12,17 @@ Simple video to ASCII renderer. Uses FFplay for audio.
 ## Usage
 ```python ascivid.py <video_file> [options]```
 
-Example
+## Options
+```
+  -h, --help         show this help message and exit
+  -gui, --disp       Enable FFplay's GUI
+  -i, --inverse      Invert brightness
+  -nc, --no-color    Disable color
+  -w, --width WIDTH  ASCII output width
+  -bl, --blocks      Use solid block character for all pixels
+  -pre, --prerender  Pre-render frames before playback
+```
+
+## Example
 ```python ascivid.py demo.mp4 -w 100 -bl -nc```
 This renders demo.mp4 at width 100 using block characters with no color.
