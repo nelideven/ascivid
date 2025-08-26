@@ -73,12 +73,12 @@ def main(file_path):
                 break
 
             ascii_str = render(frame)
-            print("\033[H\033[J", end="")
+            print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
             print(ascii_str)
 
             current_frame += 1
 
-        print("\033[H\033[J", end="")
+        print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
 
     except KeyboardInterrupt:
         print("\033[H\033[JInterrupted. Cleaning up...\n")
@@ -137,14 +137,14 @@ def main_pre(file_path):
         start_time = time.time()
         for i in range(frame_index):
             with open(os.path.join(temp_dir, f"{i:06}.txt")) as f:
-                print("\033[H\033[J", end="")
+                print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
                 print(f.read())
             expected = start_time + (i + 1) / fps
             sleep = expected - time.time()
             if sleep > 0:
                 time.sleep(sleep)
 
-        print("\033[H\033[J", end="")
+        print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
 
     except KeyboardInterrupt:
         print("\033[H\033[JInterrupted. Cleaning up...\n")
@@ -175,6 +175,14 @@ if __name__ == "__main__":
 
     ASCII_CHARS = "@%#*+=-:. " if args.inverse else " .:-=+*#%@"
     ASCII_LUT = [ASCII_CHARS[i * (len(ASCII_CHARS) - 1) // 255] for i in range(256)]
+
+    if os.name == 'nt':
+        print("!! WARNING !!")
+        print("You may be running windows, on an older Windows Command Host. Due to Command Host's limitations, color output WILL NOT WORK!!")
+        print("Please consider using Windows Terminal.")
+        confirmation = input("Do you want to continue using color? [y/N]: ")
+        if confirmation.lower() != 'y':
+            args.no_color = True
 
     if args.prerender:
         main_pre(args.file)
