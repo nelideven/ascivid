@@ -3,10 +3,8 @@ Simple video to ASCII renderer. Uses FFplay for audio.
 
 ## Dependencies
 - Python 3.8+
-- OpenCV for video decoding
-- ```pip install opencv-python```
-- NumPy for fast pixel math
-- ```pip install numpy```
+- OpenCV for video decoding (```pip install opencv-python```)
+- NumPy for fast pixel math (```pip install numpy```)
 - FFmpeg (specifically ffplay) for audio playback
 
 ## Usage
