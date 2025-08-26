@@ -24,5 +24,5 @@ Simple video to ASCII renderer. Uses FFplay for audio.
 ```
 
 ## Example
-```python ascivid.py demo.mp4 -w 100 -bl -nc```
+```python ascivid.py demo.mp4 -w 100 -bl -nc```<br>
 This renders demo.mp4 at width 100 using block characters with no color.
