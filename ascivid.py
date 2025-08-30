@@ -30,8 +30,8 @@ def render(frame):
     for y in range(new_h):
         for x in range(args.width):
             val = brightness[y, x]
-            # char = "█" if args.blocks else ASCII_LUT[val]
-            char = "#" if args.blocks else ASCII_LUT[val]  # Uncomment for something lighter for the blocks option (the full block is memory intensive)
+            char = "█" if args.blocks else ASCII_LUT[val]
+            # char = "#" if args.blocks else ASCII_LUT[val]  # Uncomment for something lighter for the blocks option (the full block is memory intensive)
             if args.no_color:
                 ascii_str += char
             else:
