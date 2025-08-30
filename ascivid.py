@@ -30,8 +30,8 @@ def render(frame):
     for y in range(new_h):
         for x in range(args.width):
             val = brightness[y, x]
-            char = "█" if args.blocks else ASCII_LUT[val]
-            # char = "#" if args.blocks else ASCII_LUT[val]  # Uncomment for something lighter for the blocks option (the full block is memory intensive)
+            # char = "█" if args.blocks else ASCII_LUT[val]
+            char = "#" if args.blocks else ASCII_LUT[val]  # Uncomment for something lighter for the blocks option (the full block is memory intensive)
             if args.no_color:
                 ascii_str += char
             else:
@@ -176,9 +176,10 @@ if __name__ == "__main__":
     parser.add_argument("file", help="Path to the video file.")
     parser.add_argument("-gui", "--disp", action="store_true", help="Enable FFplay's GUI")
     parser.add_argument("-i", "--inverse", action="store_true", help="Invert brightness")
-    parser.add_argument("-nc", "--no-color", action="store_true", help="Disable color")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-nc", "--no-color", action="store_true", help="Disable color")
+    group.add_argument("-bl", "--blocks", action="store_true", help="Use solid block character for all pixels")
     parser.add_argument("-w", "--width", type=int, default=80, help="ASCII output width")
-    parser.add_argument("-bl", "--blocks", action="store_true", help="Use solid block character for all pixels")
     parser.add_argument("-pre", "--prerender", action="store_true", help="Pre-render frames before playback")
     args = parser.parse_args()
 
