@@ -88,32 +88,33 @@ def main(file_path):
 
 # Pre-rendering
 def main_pre(file_path):
-    from multiprocessing import Process, Queue, cpu_count
-    temp_dir = tempfile.mkdtemp(prefix="ascii_frames_")
+    from multiprocessing import Process, Queue, cpu_count, Manager
+    manager = Manager()
+    ascii_frames = manager.dict()
     cap = cv2.VideoCapture(file_path)
     if not cap.isOpened():
         print("Error: Could not open video file.")
         return
 
     fps = cap.get(cv2.CAP_PROP_FPS)
+    start_time = time.time()
     frame_queue = Queue(maxsize=64)
     frame_index = 0
 
     workers = []
 
-    def worker(frame_queue, temp_dir):
+    def worker(frame_queue, ascii_frames):
         while True:
             item = frame_queue.get()
             if item is None:
                 break
             index, frame = item
-            ascii_str = render(frame)
-            with open(os.path.join(temp_dir, f"{index:06}.txt"), "w") as f:
-                f.write(ascii_str)
+            ascii_save = render(frame)
+            ascii_frames[index] = ascii_save
 
     try:
         print("Spawning renderers...")
-        workers = [Process(target=worker, args=(frame_queue, temp_dir)) for _ in range(cpu_count())]
+        workers = [Process(target=worker, args=(frame_queue, ascii_frames)) for _ in range(cpu_count())]
         for p in workers:
             p.start()
 
@@ -134,15 +135,27 @@ def main_pre(file_path):
         subprocess.Popen(ffplay_cmd)
         time.sleep(0.15)
 
+        i = 0
         start_time = time.time()
-        for i in range(frame_index):
-            with open(os.path.join(temp_dir, f"{i:06}.txt")) as f:
-                print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
-                print(f.read())
+
+        while i < len(ascii_frames):
+            elapsed = time.time() - start_time
+            target_frame = int(elapsed * fps)
+
+            if i < target_frame:
+                i += 1
+                continue
+
+            ascii_str = ascii_frames[i]
+            print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
+            print(ascii_str)
+
             expected = start_time + (i + 1) / fps
             sleep = expected - time.time()
             if sleep > 0:
                 time.sleep(sleep)
+
+            i += 1
 
         print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
 
@@ -154,8 +167,7 @@ def main_pre(file_path):
         cap.release()
 
     finally:
-        time.sleep(1)
-        shutil.rmtree(temp_dir)
+        time.sleep(0.25)
 
 # Entry point
 if __name__ == "__main__":
