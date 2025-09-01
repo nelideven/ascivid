@@ -11,7 +11,6 @@ import subprocess
 import os
 import time
 import shutil
-import tempfile
 import numpy as np
 
 ASCII_CHARS = None
@@ -30,8 +29,8 @@ def render(frame):
     for y in range(new_h):
         for x in range(args.width):
             val = brightness[y, x]
-            char = "█" if args.blocks else ASCII_LUT[val]
-            # char = "#" if args.blocks else ASCII_LUT[val]  # Uncomment for something lighter for the blocks option (the full block is memory intensive)
+            # char = "█" if args.blocks else ASCII_LUT[val]
+            char = "#" if args.blocks else ASCII_LUT[val]  # Uncomment for something lighter for the blocks option (the full block is memory intensive)
             if args.no_color:
                 ascii_str += char
             else:
@@ -104,18 +103,22 @@ def main_pre(file_path):
 
     workers = []
 
-    def worker(frame_queue, ascii_frames):
+    def worker(frame_queue, ascii_frames, tempdir=None):
         while True:
             item = frame_queue.get()
             if item is None:
                 break
             index, frame = item
             ascii_save = render(frame)
-            ascii_frames[index] = ascii_save
+            if tempdir:
+                with open(os.path.join(tempdir, f"frame_{index:06d}.txt"), "w", encoding="utf-8") as f:
+                    f.write(ascii_save)
+            else:
+                ascii_frames[index] = ascii_save
 
     try:
         print("Spawning renderers...")
-        workers = [Process(target=worker, args=(frame_queue, ascii_frames)) for _ in range(cpu_count())]
+        workers = [Process(target=worker, args=(frame_queue, ascii_frames, args.tempdir)) for _ in range(cpu_count())]
         for p in workers:
             p.start()
 
@@ -139,15 +142,24 @@ def main_pre(file_path):
         i = 0
         start_time = time.time()
 
-        while i < len(ascii_frames):
+        if args.tempdir:
+            total_frames = len([f for f in os.listdir(args.tempdir) if f.startswith("frame_") and f.endswith(".txt")])
+        else:
+            total_frames = len(ascii_frames)
+
+        while i < total_frames:
             elapsed = time.time() - start_time
             target_frame = int(elapsed * fps)
 
             if i < target_frame:
                 i += 1
                 continue
-
-            ascii_str = ascii_frames[i]
+            
+            if args.tempdir:
+                with open(os.path.join(args.tempdir, f"frame_{i:06d}.txt"), "r", encoding="utf-8") as f:
+                    ascii_str = f.read()
+            else:
+                ascii_str = ascii_frames[i]
             print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
             print(ascii_str)
 
@@ -166,9 +178,10 @@ def main_pre(file_path):
             if p.is_alive():
                 p.terminate()
         cap.release()
-
     finally:
         time.sleep(0.25)
+        if args.tempdir:
+            shutil.rmtree(args.tempdir, ignore_errors=True)
 
 # Entry point
 if __name__ == "__main__":
@@ -181,6 +194,7 @@ if __name__ == "__main__":
     group.add_argument("-bl", "--blocks", action="store_true", help="Use solid block character for all pixels")
     parser.add_argument("-w", "--width", type=int, default=80, help="ASCII output width")
     parser.add_argument("-pre", "--prerender", action="store_true", help="Pre-render frames before playback")
+    parser.add_argument("-tmp", "--tempdir", type=str, default=None, help="Temporary directory for pre-rendering")
     args = parser.parse_args()
 
     ffplay_cmd = ["ffplay", "-autoexit", "-loglevel", "warning", args.file]
