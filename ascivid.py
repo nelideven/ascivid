@@ -91,6 +91,9 @@ def main_pre(file_path):
     from multiprocessing import Process, Queue, cpu_count, Manager
     manager = Manager()
     ascii_frames = manager.dict()
+    if not os.path.exists(args.tempdir):
+        os.makedirs(args.tempdir)
+        print(f"Created temporary directory at {args.tempdir}")
     cap = cv2.VideoCapture(file_path)
     if not cap.isOpened():
         print("Error: Could not open video file.")
