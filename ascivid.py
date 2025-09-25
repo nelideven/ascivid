@@ -82,7 +82,7 @@ def main(file_path):
         print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
 
     except KeyboardInterrupt:
-        print("\033[H\033[JInterrupted. Cleaning up...\n")
+        print("\nInterrupted. Cleaning up...\n")
 
     finally:
         cap.release()
@@ -108,21 +108,24 @@ def main_pre(file_path):
     workers = []
 
     def worker(frame_queue, ascii_frames, tempdir=None):
-        while True:
-            item = frame_queue.get()
-            if item is None:
-                break
-            index, frame = item
-            ascii_save = render(frame)
-            if tempdir:
-                with open(os.path.join(tempdir, f"frame_{index:06d}.txt"), "w", encoding="utf-8") as f:
-                    f.write(ascii_save)
-            else:
-                ascii_frames[index] = ascii_save
+        try:
+            while True:
+                item = frame_queue.get()
+                if item is None:
+                    break
+                index, frame = item
+                ascii_save = render(frame)
+                if tempdir:
+                    with open(os.path.join(tempdir, f"frame_{index:06d}.txt"), "w", encoding="utf-8") as f:
+                        f.write(ascii_save)
+                else:
+                    ascii_frames[index] = ascii_save
+        except KeyboardInterrupt:
+            print("Thread exiting due to user interruption.")
 
     try:
         print("Spawning renderers...")
-        workers = [Process(target=worker, args=(frame_queue, ascii_frames, args.tempdir)) for _ in range(cpu_count())]
+        workers = [Process(target=worker, args=(frame_queue, ascii_frames, args.tempdir), daemon=True) for _ in range(cpu_count())]
         for p in workers:
             p.start()
 
@@ -177,7 +180,7 @@ def main_pre(file_path):
         print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
 
     except KeyboardInterrupt:
-        print("\033[H\033[JInterrupted. Cleaning up...\n")
+        print("\nInterrupted. Cleaning up...\n")
         for p in workers:
             if p.is_alive():
                 p.terminate()
