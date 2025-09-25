@@ -82,7 +82,7 @@ def main(file_path):
         print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
 
     except KeyboardInterrupt:
-        print("\nInterrupted. Cleaning up...\n")
+        print("\033[M\nInterrupted. Cleaning up...\n")
 
     finally:
         cap.release()
@@ -180,10 +180,7 @@ def main_pre(file_path):
         print("\033[H\033[J", end="") if os.name != 'nt' or confirmation.lower() == 'y' else ""
 
     except KeyboardInterrupt:
-        print("\nInterrupted. Cleaning up...\n")
-        for p in workers:
-            if p.is_alive():
-                p.terminate()
+        print("\033[M\nInterrupted. Cleaning up...\n")
         cap.release()
     finally:
         time.sleep(0.25)
