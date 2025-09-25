@@ -12,6 +12,7 @@ import os
 import time
 import shutil
 import numpy as np
+from multiprocessing import Process, Queue, cpu_count, Manager
 
 ASCII_CHARS = None
 args = None
@@ -29,12 +30,15 @@ def render(frame):
     for y in range(new_h):
         for x in range(args.width):
             val = brightness[y, x]
-            char = "█" if args.blocks else ASCII_LUT[val]
-            # char = "#" if args.blocks else ASCII_LUT[val]  # Uncomment for something lighter for the blocks option (the full block is memory intensive)
+            # char = "█" if args.blocks else ASCII_LUT[val]
+            char = "#" if args.blocks else ASCII_LUT[val]  # Uncomment for something lighter for the blocks option (the full block is memory intensive)
             if args.no_color:
                 ascii_str += char
             else:
-                ascii_str += f"\033[38;2;{r[y,x]};{g[y,x]};{b[y,x]}m{char}\033[0m"
+                if args.inverse:
+                    ascii_str += f"\033[38;2;{255 - r[y,x]};{255 - g[y,x]};{255 - b[y,x]}m{char}\033[0m"
+                else:
+                    ascii_str += f"\033[38;2;{r[y,x]};{g[y,x]};{b[y,x]}m{char}\033[0m"
         ascii_str += "\n"
     return ascii_str
 
@@ -65,9 +69,6 @@ def main(file_path):
                     break
                 current_frame += 1
 
-            if current_frame != target_frame:
-                continue  # Still catching up
-
             ret, frame = cap.read()
             if not ret:
                 break
@@ -88,12 +89,12 @@ def main(file_path):
 
 # Pre-rendering
 def main_pre(file_path):
-    from multiprocessing import Process, Queue, cpu_count, Manager
     manager = Manager()
     ascii_frames = manager.dict()
-    if not os.path.exists(args.tempdir):
-        os.makedirs(args.tempdir)
-        print(f"Created temporary directory at {args.tempdir}")
+    if args.tempdir:
+        if not os.path.exists(args.tempdir):
+            os.makedirs(args.tempdir)
+            print(f"Created temporary directory at {args.tempdir}")
     cap = cv2.VideoCapture(file_path)
     if not cap.isOpened():
         print("Error: Could not open video file.")
@@ -191,7 +192,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Simple video to ASCII renderer using OpenCV and FFplay for audio.")
     parser.add_argument("file", help="Path to the video file.")
     parser.add_argument("-gui", "--disp", action="store_true", help="Enable FFplay's GUI")
-    parser.add_argument("-i", "--inverse", action="store_true", help="Invert brightness")
+    parser.add_argument("-i", "--inverse", action="store_true", help="Invert brightness and color")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-nc", "--no-color", action="store_true", help="Disable color")
     group.add_argument("-bl", "--blocks", action="store_true", help="Use solid block character for all pixels")
